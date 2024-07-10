@@ -1,20 +1,12 @@
 import {Footer} from '@/components';
-import {login} from '@/services/ant-design-pro/api';
-import {
-  LockOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import {
-  LoginForm,
-  ProFormCheckbox,
-  ProFormText,
-} from '@ant-design/pro-components';
-import {history, useModel, Helmet, Link} from '@umijs/max';
+import {register} from '@/services/ant-design-pro/api';
+import {LockOutlined, UserOutlined,} from '@ant-design/icons';
+import {LoginForm, ProFormText,} from '@ant-design/pro-components';
+import {Helmet, history} from '@umijs/max';
 import {PLANET_LINK, SYSTEM_LOGO} from "@/constant";
-import {Alert, Divider, message, Tabs} from 'antd';
+import {message, Tabs} from 'antd';
 import Settings from '../../../../config/defaultSettings';
 import React, {useState} from 'react';
-import {flushSync} from 'react-dom';
 import {createStyles} from 'antd-style';
 
 const useStyles = createStyles(({token}) => {
@@ -52,64 +44,42 @@ const useStyles = createStyles(({token}) => {
     },
   };
 });
-const LoginMessage: React.FC<{
-  content: string;
-}> = ({content}) => {
-  return (
-    <Alert
-      style={{
-        marginBottom: 24,
-      }}
-      message={content}
-      type="error"
-      showIcon
-    />
-  );
-};
-const Login: React.FC = () => {
-  const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
+
+const Register: React.FC = () => {
   const [type, setType] = useState<string>('account');
-  const {initialState, setInitialState} = useModel('@@initialState');
   const {styles} = useStyles();
-  const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      flushSync(() => {
-        setInitialState((s) => ({
-          ...s,
-          currentUser: userInfo,
-        }));
-      });
+  const handleSubmit = async (values: API.RegisterParams) => {
+    // 校验
+    const { userPassword, checkPassword } = values;
+    if(userPassword !== checkPassword) {
+      message.error("用户两次输入的密码不一致");
+      return;
     }
-  };
-  const handleSubmit = async (values: API.LoginParams) => {
+
     try {
-      // 登录
-      const user = await login({
-        ...values,
-        type,
-      });
-      if (user) {
-        const defaultLoginSuccessMessage = '登录成功！';
+      // 注册
+      const id = await register(values);
+      if (id > 0) {
+        const defaultLoginSuccessMessage = '注册成功！';
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
         const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
+        history.push('user/login?redirect=' + urlParams.get('redirect') || '/');
         return;
+      } else {
+        const defaultLoginFailureMessage = '注册失败，请重试！';
+        message.error(defaultLoginFailureMessage);
       }
-      setUserLoginState(user);
     } catch (error) {
-      const defaultLoginFailureMessage = '登录失败，请重试！';
+      const defaultLoginFailureMessage = '注册失败，请重试！';
       console.log(error);
       message.error(defaultLoginFailureMessage);
     }
   };
-  const {status, type: loginType} = userLoginState;
   return (
     <div className={styles.container}>
       <Helmet>
         <title>
-          {'登录'}- {Settings.title}
+          {'注册'}- {Settings.title}
         </title>
       </Helmet>
       <div
@@ -119,6 +89,11 @@ const Login: React.FC = () => {
         }}
       >
         <LoginForm
+          submitter={{
+              searchConfig: {
+                submitText: "注册"
+              }
+          }}
           contentStyle={{
             minWidth: 280,
             maxWidth: '75vw',
@@ -130,7 +105,7 @@ const Login: React.FC = () => {
             autoLogin: true,
           }}
           onFinish={async (values) => {
-            await handleSubmit(values as API.LoginParams);
+            await handleSubmit(values as API.RegisterParams);
           }}
         >
           <Tabs
@@ -140,14 +115,11 @@ const Login: React.FC = () => {
             items={[
               {
                 key: 'account',
-                label: '账号密码登录',
+                label: '账号密码注册',
               }
             ]}
           />
 
-          {status === 'error' && loginType === 'account' && (
-            <LoginMessage content={'错误的账号和密码'}/>
-          )}
           {type === 'account' && (
             <>
               <ProFormText
@@ -183,34 +155,45 @@ const Login: React.FC = () => {
                   },
                 ]}
               />
+              <ProFormText.Password
+                name="checkPassword"
+                fieldProps={{
+                  size: 'large',
+                  prefix: <LockOutlined/>,
+                }}
+                placeholder={'请再次输入密码'}
+                rules={[
+                  {
+                    required: true,
+                    message: '密码是必填项！',
+                  },
+                  {
+                    min: 8,
+                    type: "string",
+                    message: '密码最小长度需要不小于8',
+                  },
+                ]}
+              />
+              <ProFormText
+                name="planetCode"
+                fieldProps={{
+                  size: 'large',
+                }}
+                placeholder="请输入1-5位数作为星球编号"
+                rules={[
+                  {
+                    required: true,
+                    message: '星球编号是必填项且不能超过5位数！',
+                  },
+                ]}
+              />
             </>
           )}
-
-          {status === 'error' && loginType === 'mobile' && <LoginMessage content="验证码错误"/>}
-          <div
-            style={{
-              marginBottom: 24,
-            }}
-          >
-            <ProFormCheckbox noStyle name="autoLogin">
-              自动登录
-            </ProFormCheckbox>
-            <Divider type={"vertical"} />
-            <Link to="/user/register">新用户注册</Link>
-            <Divider type={"vertical"} />
-
-            <a
-              style={{
-                float: 'right',
-              }}
-            >
-              忘记密码 ?
-            </a>
-          </div>
         </LoginForm>
       </div>
       <Footer/>
     </div>
-  );
+  )
+    ;
 };
-export default Login;
+export default Register;
