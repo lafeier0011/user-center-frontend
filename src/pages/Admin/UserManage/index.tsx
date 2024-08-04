@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable, { TableDropdown } from '@ant-design/pro-table';
-import { searchUsers } from "@/services/ant-design-pro/api";
-import {Image} from "antd";
+import { searchUsers } from '@/services/ant-design-pro/api';
+import { Image } from 'antd';
 
 const columns: ProColumns<API.CurrentUser>[] = [
   {
@@ -46,6 +46,7 @@ const columns: ProColumns<API.CurrentUser>[] = [
   {
     title: '状态',
     dataIndex: 'userStatus',
+    render: (_, record) => <div>{record.userStatus === 0 ? '正常' : '异常'}</div>,
   },
   {
     title: '星球编号',
@@ -102,12 +103,23 @@ export default () => {
       columns={columns}
       actionRef={actionRef}
       cardBordered
-      request={async (params = {}, sort, filter) => {
-        console.log(sort, filter);
-        const userList = await searchUsers();
+      request={async (
+        // 第一个参数 params 查询表单和 params 参数的结合
+        // 第一个参数中一定会有 pageSize 和  current ，这两个参数是 antd 的规范
+        params: {
+          pageSize: number;
+          current: number;
+        },
+        sort,
+        filter,
+      ) => {
+        // 这里需要返回一个 Promise,在返回之前你可以进行数据转化
+        // 如果需要转化参数可以在这里进行修改
+        console.log(params, sort, filter);
+        const userList = await searchUsers(params);
         return {
-          data: userList
-        }
+          data: userList,
+        };
       }}
       editable={{
         type: 'multiple',

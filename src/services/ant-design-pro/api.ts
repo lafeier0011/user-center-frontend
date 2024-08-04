@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import { request } from '@umijs/max';
+import request from '@/plugins/globalRequest';
 
 /** 获取当前的用户 GET /api/user/current */
 export async function currentUser(options?: { [key: string]: any }) {
@@ -44,12 +44,12 @@ export async function register(body: API.RegisterParams, options?: { [key: strin
 
 /** 搜索用户 GET /api/user/search */
 export async function searchUsers(options?: { [key: string]: any }) {
+  console.log(options);
   return request<API.BaseResponse<API.CurrentUser[]>>('/api/user/search', {
     method: 'GET',
-    ...(options || {}),
+    params: options,
   });
 }
-
 
 /** 此处后端没有提供注释 GET /api/notices */
 export async function getNotices(options?: { [key: string]: any }) {

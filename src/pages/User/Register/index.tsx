@@ -1,15 +1,15 @@
-import {Footer} from '@/components';
-import {register} from '@/services/ant-design-pro/api';
-import {LockOutlined, UserOutlined,} from '@ant-design/icons';
-import {LoginForm, ProFormText,} from '@ant-design/pro-components';
-import {Helmet, history} from '@umijs/max';
-import {PLANET_LINK, SYSTEM_LOGO} from "@/constant";
-import {message, Tabs} from 'antd';
+import { Footer } from '@/components';
+import { register } from '@/services/ant-design-pro/api';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { LoginForm, ProFormText } from '@ant-design/pro-components';
+import { Helmet, history } from '@umijs/max';
+import { PLANET_LINK, SYSTEM_LOGO } from '@/constant';
+import { message, Tabs } from 'antd';
 import Settings from '../../../../config/defaultSettings';
-import React, {useState} from 'react';
-import {createStyles} from 'antd-style';
+import React, { useState } from 'react';
+import { createStyles } from 'antd-style';
 
-const useStyles = createStyles(({token}) => {
+const useStyles = createStyles(({ token }) => {
   return {
     action: {
       marginLeft: '8px',
@@ -47,31 +47,33 @@ const useStyles = createStyles(({token}) => {
 
 const Register: React.FC = () => {
   const [type, setType] = useState<string>('account');
-  const {styles} = useStyles();
+  const { styles } = useStyles();
   const handleSubmit = async (values: API.RegisterParams) => {
-    // 校验
     const { userPassword, checkPassword } = values;
-    if(userPassword !== checkPassword) {
-      message.error("用户两次输入的密码不一致");
+    // 校验
+    if (userPassword !== checkPassword) {
+      message.error('两次输入的密码不一致');
       return;
     }
 
     try {
       // 注册
       const id = await register(values);
-      if (id > 0) {
+      if (id) {
         const defaultLoginSuccessMessage = '注册成功！';
         message.success(defaultLoginSuccessMessage);
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push('user/login?redirect=' + urlParams.get('redirect') || '/');
+
+        /** 此方法会跳转到 redirect 参数所在的位置 */
+        if (!history) return;
+        const { search } = history.location;
+        history.push({
+          pathname: '/user/login',
+          search,
+        });
         return;
-      } else {
-        const defaultLoginFailureMessage = '注册失败，请重试！';
-        message.error(defaultLoginFailureMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       const defaultLoginFailureMessage = '注册失败，请重试！';
-      console.log(error);
       message.error(defaultLoginFailureMessage);
     }
   };
@@ -90,17 +92,21 @@ const Register: React.FC = () => {
       >
         <LoginForm
           submitter={{
-              searchConfig: {
-                submitText: "注册"
-              }
+            searchConfig: {
+              submitText: '注册',
+            },
           }}
           contentStyle={{
             minWidth: 280,
             maxWidth: '75vw',
           }}
-          logo={<img alt="logo" src={SYSTEM_LOGO}/>}
+          logo={<img alt="logo" src={SYSTEM_LOGO} />}
           title="编程导航星球"
-          subTitle={<a href={PLANET_LINK} target={"_blank"} rel="noreferrer">最好的编程学习圈子</a>}
+          subTitle={
+            <a href={PLANET_LINK} target={'_blank'} rel="noreferrer">
+              最好的编程学习圈子
+            </a>
+          }
           initialValues={{
             autoLogin: true,
           }}
@@ -116,7 +122,7 @@ const Register: React.FC = () => {
               {
                 key: 'account',
                 label: '账号密码注册',
-              }
+              },
             ]}
           />
 
@@ -126,21 +132,21 @@ const Register: React.FC = () => {
                 name="userAccount"
                 fieldProps={{
                   size: 'large',
-                  prefix: <UserOutlined/>,
+                  prefix: <UserOutlined />,
                 }}
                 placeholder={'请输入账号'}
                 rules={[
                   {
                     required: true,
                     message: '账号是必填项！',
-                  }
+                  },
                 ]}
               />
               <ProFormText.Password
                 name="userPassword"
                 fieldProps={{
                   size: 'large',
-                  prefix: <LockOutlined/>,
+                  prefix: <LockOutlined />,
                 }}
                 placeholder={'请输入密码'}
                 rules={[
@@ -150,7 +156,7 @@ const Register: React.FC = () => {
                   },
                   {
                     min: 8,
-                    type: "string",
+                    type: 'string',
                     message: '密码最小长度需要不小于8',
                   },
                 ]}
@@ -159,7 +165,7 @@ const Register: React.FC = () => {
                 name="checkPassword"
                 fieldProps={{
                   size: 'large',
-                  prefix: <LockOutlined/>,
+                  prefix: <LockOutlined />,
                 }}
                 placeholder={'请再次输入密码'}
                 rules={[
@@ -169,7 +175,7 @@ const Register: React.FC = () => {
                   },
                   {
                     min: 8,
-                    type: "string",
+                    type: 'string',
                     message: '密码最小长度需要不小于8',
                   },
                 ]}
@@ -191,9 +197,8 @@ const Register: React.FC = () => {
           )}
         </LoginForm>
       </div>
-      <Footer/>
+      <Footer />
     </div>
-  )
-    ;
+  );
 };
 export default Register;
